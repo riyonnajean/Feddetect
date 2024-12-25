@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="colorPrimary">#1294c8</color>
+    <color name="colorPrimaryDark">#1294c8</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="blue">#2196F3</color>
+    <color name="text_color">#555555</color>
+    <color name="light_blue">#ADD8E6</color>
+    <color name="sky_blue">#87CEEB</color>
+    <color name="dodger_blue">#1E90FF</color>
+    <color name="royal_blue">#4169E1</color>
+    <color name="medium_blue">#0000CD</color>
+    <color name="dark_blue">#00008B</color>
+    <color name="navy_blue">#000080</color>
+    <color name="cobalt_blue">#0047AB</color>
+    <color name="colorText">#FFFFFF</color>
+    <color name="colorTextHint">#51d8c7</color>
+    <color name="light_green">#90EE90</color>
+    <color name="medium_green">#008000</color>
+    <color name="dark_green">#006400</color>
+    <color name="forest_green">#228B22</color>
+    <color name="lime_green">#32CD32</color>
+    <color name="olive_green">#808000</color>
+    <color name="pale_green">#98FB98</color>
+    <color name="sea_green">#2E8B57</color>
+    <color name="spring_green">#00FF7F</color>
+    <color name="yellow_green">#9ACD32</color>
+    <color name="light_teal">#A0D6B4</color> <!-- Light Teal -->
+    <color name="medium_teal">#008080</color> <!-- Medium Teal -->
+    <color name="turquoise">#40E0D0</color> <!-- Turquoise -->
+    <color name="medium_turquoise">#48D1CC</color> <!-- Medium Turquoise -->
+    <color name="light_turquoise">#AFEEEE</color> <!-- Light Turquoise -->
+    <color name="cadet_blue">#5F9EA0</color> <!-- Cadet Blue -->
+    <color name="teal_blue">#367588</color> <!-- Teal Blue -->
+    <color name="dark_teal">#003B4C</color> <!-- Dark Teal -->
+    <color name="charcoal_teal">#2E3A3F</color> <!-- Charcoal Teal -->
+    <color name="gunmetal">#2A3D3F</color> <!-- Gunmetal -->
+    <color name="dark_cyan">#006466</color> <!-- Dark Cyan -->
+    <color name="blue_green">#1D4E50</color> <!-- Blue-Green -->
+    <color name="deep_teal">#004F54</color> <!-- Deep Teal -->
+    <color name="dark_turquoise">#007D7A</color> <!-- Dark Turquoise -->
+    <color name="midnight_green">#004B46</color> <!-- Midnight Green -->
+    <color name="steel_teal">#2A5B5D</color> <!-- Steel Teal -->
+    <color name="deep_ocean">#014F51</color> <!-- Deep Ocean -->
+    <color name="medium_red">#F44336</color>
+
+</resources>
