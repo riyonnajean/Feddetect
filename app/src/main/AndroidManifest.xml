@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <!-- Add Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> <!-- Remove deprecated WRITE_EXTERNAL_STORAGE -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.GET_PACKAGE_SIZE"/>
+
+
+
+    <!-- Android 11 and above: manage storage permission -->
     <uses-permission
-        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        tools:node="remove" /> <!-- Add MANAGE_EXTERNAL_STORAGE for Android 11+ -->
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
+        android:required="false"
+        tools:node="remove" /> <!-- This is for devices < Android 11, and should be manually requested at runtime if needed -->
 
     <application
         android:allowBackup="true"
@@ -19,15 +26,14 @@
         android:roundIcon="@mipmap/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.Fed">
+
+        <!-- Activity Definitions -->
         <activity
             android:name=".MalwareActivity"
             android:exported="false" />
         <activity
-            android:name=".MalwareHistory"
-            android:exported="false" />
-        <activity
             android:name=".SettingActivity"
-            android:exported="false" /> <!-- Activity Definitions -->
+            android:exported="false" />
         <activity
             android:name=".ScanActivity"
             android:exported="false" />
@@ -46,7 +52,6 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
