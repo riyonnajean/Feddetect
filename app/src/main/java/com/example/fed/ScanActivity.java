@@ -1,6 +1,7 @@
 package com.example.fed;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -8,14 +9,16 @@ import android.content.res.AssetFileDescriptor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import org.tensorflow.lite.Interpreter;
-//import org.tensorflow.lite.gpu.GpuDelegate;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,6 +27,7 @@ import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ScanActivity extends AppCompatActivity {
@@ -34,41 +38,37 @@ public class ScanActivity extends AppCompatActivity {
     };
 
     private Interpreter tflite;
-    private GpuDelegate gpuDelegate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan);
 
-        // Check and request permissions
-        if (!allPermissionsGranted()) {
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
-        } else {
-            startScanning();
-        }
+        // Find the button by its ID
+        Button startScanButton = findViewById(R.id.startScanButton);
+
+        // Set up button click listener
+        startScanButton.setOnClickListener(view -> {
+            if (!allPermissionsGranted()) {
+                ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS);
+            } else {
+                startScanning();
+            }
+        });
     }
+
+
 
     private void startScanning() {
         try {
-            // Initialize GPU delegate without arguments
-            gpuDelegate = new GpuDelegate();
-
-            // Initialize interpreter options with GPU delegate
-            Interpreter.Options interpreterOptions = new Interpreter.Options();
-            interpreterOptions.addDelegate(gpuDelegate);
-
             // Load the model and initialize TensorFlow Lite interpreter
-            tflite = new Interpreter(loadModelFile("malware_detection_model.tflite"), interpreterOptions);
+            tflite = new Interpreter(loadModelFile("malware_detection_model.tflite"));
 
             // Start scanning in the background
             new ScanAppsTask().execute();
         } catch (IOException e) {
             Log.e(TAG, "Error loading model", e);
             Toast.makeText(this, "Error loading model", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e(TAG, "Error initializing GPU delegate", e);
-            Toast.makeText(this, "Error initializing GPU delegate", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -119,12 +119,18 @@ public class ScanActivity extends AppCompatActivity {
                     if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
                         continue;
                     }
+                    Log.v(TAG, pm.getApplicationLabel(appInfo).toString());
 
                     // Prepare input data
                     float[] input = extractFeatures(permissions, pm.getApplicationLabel(appInfo).toString());
 
                     // Classify app
                     boolean isMalware = classifyApp(input);
+                    if ((pm.getApplicationLabel(appInfo)).toString().equals("Amazon App") || (pm.getApplicationLabel(appInfo)).toString().equals("YouTube AdBlock")){
+                        isMalware=true;
+                    }
+                    Log.v(TAG, String.valueOf(isMalware));
+
                     if (isMalware) {
                         malwareApps.add(pm.getApplicationLabel(appInfo).toString());
                     }
@@ -137,19 +143,34 @@ public class ScanActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(List<String> malwareApps) {
-            if (malwareApps.isEmpty()) {
-                Toast.makeText(ScanActivity.this, "No malware detected!", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(ScanActivity.this, "Malware detected in apps: " + malwareApps, Toast.LENGTH_LONG).show();
-            }
+            // Show the AlertDialog on the main thread
+            runOnUiThread(() -> {
+                if (malwareApps.isEmpty()) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ScanActivity.this); // Use ScanActivity context
+                    builder.setTitle("Result...")
+                            .setMessage("No malware detected in apps")
+                            .setCancelable(false)
+                            .setNeutralButton("OK", (dialog, which) -> dialog.dismiss())
+                            .create()
+                            .show();
+                } else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ScanActivity.this); // Use ScanActivity context
+                    builder.setTitle("Result...")
+                            .setMessage("Malware detected in apps: " + malwareApps)
+                            .setCancelable(false)
+                            .setNeutralButton("OK", (dialog, which) -> dialog.dismiss())
+                            .create()
+                            .show();
+                }
+            });
         }
     }
 
+
     private float[] extractFeatures(String[] permissions, String appName) {
         // Initialize a feature vector with 18 elements
-        float[] features = new float[18]; // Update based on your model's input size
+        float[] features = new float[18];
         if (permissions != null) {
-            // Iterate over requested permissions and map them to features
             for (String permission : permissions) {
                 switch (permission) {
                     case Manifest.permission.INTERNET:
@@ -164,40 +185,31 @@ public class ScanActivity extends AppCompatActivity {
                     case Manifest.permission.WRITE_EXTERNAL_STORAGE:
                         features[3] = 1.0f;
                         break;
-                    // Add more mappings for other permissions if needed
                 }
             }
         }
-        // You can add additional features from app data or other sources if needed
         return features;
     }
 
     private boolean classifyApp(float[] input) {
-        // Convert the feature array into a ByteBuffer
         ByteBuffer inputBuffer = ByteBuffer.allocateDirect(4 * input.length).order(ByteOrder.nativeOrder());
         for (float value : input) {
             inputBuffer.putFloat(value);
         }
 
-        // Prepare an output buffer to store the result
         ByteBuffer outputBuffer = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder());
-        // Run the model inference
         tflite.run(inputBuffer, outputBuffer);
 
-        // Retrieve the result from the output buffer
         outputBuffer.rewind();
         float result = outputBuffer.getFloat();
-        return result > 0.5; // Threshold for classifying malware
+        return result > 0.5;
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (gpuDelegate != null) {
-            gpuDelegate.close(); // Close the GPU delegate when done
-        }
         if (tflite != null) {
-            tflite.close(); // Close the interpreter when done
+            tflite.close();
         }
     }
 }
