@@ -20,7 +20,9 @@ import androidx.core.content.ContextCompat;
 
 import org.tensorflow.lite.Interpreter;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,6 +31,13 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class ScanActivity extends AppCompatActivity {
     private static final String TAG = "ScanActivity";
@@ -62,6 +71,7 @@ public class ScanActivity extends AppCompatActivity {
     private void startScanning() {
         try {
             // Load the model and initialize TensorFlow Lite interpreter
+            copyModelToInternalStorage("malware_detection_model.tflite");
             tflite = new Interpreter(loadModelFile("malware_detection_model.tflite"));
 
             // Start scanning in the background
@@ -71,6 +81,26 @@ public class ScanActivity extends AppCompatActivity {
             Toast.makeText(this, "Error loading model", Toast.LENGTH_SHORT).show();
         }
     }
+
+    private void copyModelToInternalStorage(String modelName) throws IOException {
+        File outputFile = new File(getFilesDir(), modelName);
+
+        if (!outputFile.exists()) {
+            try (FileInputStream inputStream = new FileInputStream(getAssets().openFd(modelName).getFileDescriptor());
+                 FileOutputStream outputStream = new FileOutputStream(outputFile)) {
+
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+            }
+            Log.d(TAG, "Model copied to internal storage: " + outputFile.getAbsolutePath());
+        } else {
+            Log.d(TAG, "Model already exists in internal storage: " + outputFile.getAbsolutePath());
+        }
+    }
+
 
     private boolean allPermissionsGranted() {
         for (String permission : REQUIRED_PERMISSIONS) {
@@ -141,6 +171,7 @@ public class ScanActivity extends AppCompatActivity {
             return malwareApps;
         }
 
+
         @Override
         protected void onPostExecute(List<String> malwareApps) {
             // Show the AlertDialog on the main thread
@@ -150,7 +181,9 @@ public class ScanActivity extends AppCompatActivity {
                     builder.setTitle("Result...")
                             .setMessage("No malware detected in apps")
                             .setCancelable(false)
-                            .setNeutralButton("OK", (dialog, which) -> dialog.dismiss())
+                            .setNeutralButton("OK", (dialog, which) -> {
+                                dialog.dismiss();
+                            })
                             .create()
                             .show();
                 } else {
@@ -158,13 +191,68 @@ public class ScanActivity extends AppCompatActivity {
                     builder.setTitle("Result...")
                             .setMessage("Malware detected in apps: " + malwareApps)
                             .setCancelable(false)
-                            .setNeutralButton("OK", (dialog, which) -> dialog.dismiss())
+                            .setNeutralButton("OK", (dialog, which) -> {
+                                dialog.dismiss();
+                                // Upload the model after user clicks "OK"
+                                new UploadModelTask().execute();
+                            })
                             .create()
                             .show();
                 }
             });
         }
+
     }
+    public class UploadModelTask extends AsyncTask<Void, Void, Boolean> {
+        private static final String TAG = "UploadModelTask";
+        private static final String SERVER_URL = "https://c01e-103-89-232-66.ngrok-free.app/upload";
+        private final MediaType MEDIA_TYPE_TFLITE = MediaType.parse("application/octet-stream");
+    @Override
+    protected Boolean doInBackground(Void... voids) {
+        File modelFile = new File(getFilesDir(), "malware_detection_model.tflite");
+
+        if (!modelFile.exists()) {
+            Log.e(TAG, "Model file does not exist");
+            return false;
+        }
+
+        OkHttpClient client = new OkHttpClient();
+
+        RequestBody fileBody = RequestBody.create(modelFile, MEDIA_TYPE_TFLITE);
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("file", modelFile.getName(), fileBody)
+                .addFormDataPart("client_id", "example_client_id")
+                .build();
+
+        Request request = new Request.Builder()
+                .url(SERVER_URL)
+                .post(requestBody)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            return response.isSuccessful();
+        } catch (IOException e) {
+            Log.e(TAG, "Error uploading model", e);
+            return false;
+        }
+    }
+
+    @Override
+    protected void onPostExecute(Boolean result) {
+        if (result) {
+            Toast.makeText(ScanActivity.this, "Model uploaded successfully", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(ScanActivity.this, "Failed to upload model", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // Ensure getFilesDir() is accessible
+    private File getFilesDir() {
+        // Replace with appropriate context method if needed
+        return ScanActivity.this.getFilesDir();
+    }
+}
 
 
     private float[] extractFeatures(String[] permissions, String appName) {
