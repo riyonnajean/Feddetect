@@ -205,7 +205,7 @@ public class ScanActivity extends AppCompatActivity {
     }
     public class UploadModelTask extends AsyncTask<Void, Void, Boolean> {
         private static final String TAG = "UploadModelTask";
-        private static final String SERVER_URL = "https://c01e-103-89-232-66.ngrok-free.app/upload";
+        private static final String SERVER_URL = "https://9ee1-2409-4071-6e96-f544-2c0e-6fcb-9c2a-cf00.ngrok-free.app/upload";
         private final MediaType MEDIA_TYPE_TFLITE = MediaType.parse("application/octet-stream");
     @Override
     protected Boolean doInBackground(Void... voids) {
@@ -222,7 +222,7 @@ public class ScanActivity extends AppCompatActivity {
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("file", modelFile.getName(), fileBody)
-                .addFormDataPart("client_id", "example_client_id")
+                .addFormDataPart("client_id", "sonali")
                 .build();
 
         Request request = new Request.Builder()
