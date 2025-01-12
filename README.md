@@ -19,3 +19,4 @@ Operating Systems:
   
 Database used:
   Firebase: Used for real-time data synchronization and secure transmission of model updates between devices and the federated server.
+
