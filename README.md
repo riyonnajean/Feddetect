@@ -6,15 +6,19 @@ directly on user devices without sharing raw data. This ensures that sensitive u
 
 Software and Technologies Used
   Python(Flask): Used for implementing federated learning algorithms due to its simplicity and extensive libraries for machine learning.
+  
   Java: Utilized for Android app development.
+  
   ReactJS: For creating a dashboard for central server(federated server) and for developing a user-friendly and responsive interface for interactions with the malware detection system.
 
 Machine Learning Frameworks:
   TensorFlow Lite: For intergrating the model into the android device.
+  
   TensorFlow Federated: For the federated server.
   
 Operating Systems:
   Android 20: Chosen operating system for the devices.
+  
   Linux: Provides a stable and secure environment for the federated server.
   
 Database used:
